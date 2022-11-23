@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block title %}Homepage{% endblock title %}
+
+{% block content %}
+{% if request.user.is_authenticated %}
+
+<div class="container"  id ="summary">
+    <div class="row p-0 mx-auto mt-2">       
+        <div class="col-lg-4 shadow ">
+        <div class="alert bg-primary bg-gradient mt-2"><h2 class="text-dark">Add Todo</h2></div>
+        <div class="p-0">
+            <form action="/add-todo/" method="post">
+            {% csrf_token %}
+            {{form.as_p}}
+            <hr>
+            <input class="btn btn-primary" type="submit" value="Add-Todo">
+            </form>
+        </div>
+        </div>
+        
+        {% if todos %}      
+        <div class="col">
+            <table class="table table-primary text-center">
+            
+            <tr class="table-danger">
+                <th>Id</th>
+                <th>No.</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Priority</th>
+                <th><i class="material-icons">delete</i></th>
+                <th>Update Status</th>
+            </tr>
+            
+                
+            {% csrf_token %}
+            {% for todo in todos %}
+            <tr>
+                <td>{{todo.pk}}</td>
+                <td>{{ forloop.counter }}</td>
+                <td>{{todo.title}}</td>
+                <td>{{todo.status}}</td>
+                <td>{{todo.priority}}</td>
+                <td>
+                    <button onclick="deleteFunction({{todo.pk}})" type="button" class="btn btn-danger">Delete</button>
+                </td>
+                <td>
+                    {% if todo.status == "P" %}
+                    <select class="form-select" onchange="myFunctionP({{todo.id}})" id="select_id">
+                        <option selected="selected" disabled>pending</option>
+                        <option id="status_value_P" value="C">Completed</option>
+                    </select>
+                    {% elif todo.status == "C" %}
+                    <select class="form-select" onchange="myFunctionC({{todo.id}})" id="select_id">
+                        <option selected="selected" disabled>Completed</option>        
+                        <option  id="status_value_C" value="P">Pending</option>
+                    </select>
+                </td> 
+                    {% endif %}
+                
+
+            </tr>
+            {% endfor %}
+                
+            </table>
+        </div>
+        {% else %}
+        <div class="col ">
+            <div class="alert alert-info fs-2 p-5" role="alert">
+                NO TODO FOUND
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% else %}
+ <div class="container bg-light bg-gradient mt-5 p-5 shadow">
+    <div class="row">
+      <div class="col text-center">
+        <p class="fs-2 fw-bold">Welcome To TODO APP</p>
+      </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <a class="nav-link" href="/login">
+            <button type="button" class="btn btn-primary btn-lg px-5 gradient-custom-4 border-0 fs-3 text-dark">Login</button>
+            </a>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center fs-3">
+            OR
+        </div>
+    </div>
+    <div class="row">
+        <div class="col text-center">
+            <a class="nav-link" href="/signup">
+            <button type="button" class="btn btn-primary btn-lg px-5 gradient-custom-4 border-0 fs-3 text-dark">Signup</button>
+            </a>
+        </div>
+    </div>
+  </div> 
+
+
+{% endif %}
+{% endblock content %}
+
+{% block javascript %}
+<script type="text/javascript">
+
+    function deleteFunction(id){
+        console.log("id = "+id)
+
+        $.ajax({
+            type: 'POST',
+            url: "{% url 'delete_todo' %}",
+            data: {
+                'del_id': id,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+            },
+            success: function(data){
+                $('#update_reload').html(data);
+            }
+        });
+    }
+    
+    function myFunctionP(id) {
+      var x = document.getElementById("status_value_P").value;
+      
+      console.log("id = "+id)
+      console.log('change value='+x);
+      $.ajax({
+            type: 'POST',
+            url: "{% url 'change_status' %}",
+            data : {
+                "x": x,
+                "id":id,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+            },
+            success: function(data){
+                // location.reload();
+                $('#update_reload').html(data);
+            }
+                   
+    });
+    }
+    function myFunctionC(id) {
+      var x = document.getElementById("status_value_C").value;
+      
+      console.log("id = "+id)
+      console.log('change value='+x);
+      
+      $.ajax({
+            type: 'POST',
+            url: "change-status/",
+            data : {
+                "x": x,
+                "id":id,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+              },
+              success: function(data){
+                // location.reload();
+                $('#update_reload').html(data);
+              }
+    });
+    }
+    </script>
+{% endblock javascript%}
